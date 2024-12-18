@@ -74,6 +74,66 @@ async function fetchStreams(streamTypes) {
     return streamTypes.map(x => streams.getStream(x));
 }
 
+function idxMax(array) {
+	return array.reduce((prev, current, currentIndex, array) => {
+		return current > array[prev] ? currentIndex : prev;
+	}, 0);
+}
+
+function findEfforts(watts, powerMinimum, period, minJoules) {
+	// create the moving average Power
+	// padding the extents with 0's
+	const movingAverage = watts.map((value, index, array) => {
+		// ends cut to 0
+		if (index < period - 1) {
+			return 0;
+		}
+		if (index > array.length - period) {
+			return 0;
+		}
+		let total = 0;
+		array.slice(index - period, index + 1).forEach((value) => (total += value));
+		return total / period;
+	});
+
+	const effortValue = [];
+	const efforts = [];
+    let thisEffort = [];
+    let thisEffortStartIndex = 0;
+    let thisEffortEndIndex = 0;
+	// Split the movingAverage into efforts > powerMinimum
+	movingAverage.forEach((value, index) => {
+		// push to this effort
+		if (value >= powerMinimum) {
+            thisEffort.push(value);
+            if (thisEffort.length == 1) {
+                thisEffortStartIndex = index;
+            }
+			return;
+		}
+        // effort has ended
+        thisEffortEndIndex = index
+		let effortJoules = 0;
+		// because Watts * seconds = Joules and sampling is 1hz
+        thisEffort.forEach((value) => (effortJoules += value));
+        if (effortJoules >= minJoules) {
+            effortValue.push(effortJoules);
+            efforts.push({
+                power: effortJoules / thisEffort.length,
+                timeS: thisEffort.length,
+                joules: effortJoules,
+                startIndex: thisEffortStartIndex,
+                endIndex: thisEffortEndIndex
+            });
+        }
+		thisEffort = [];
+	});
+
+	// return the best effort
+	const bestEffort = idxMax(effortValue);
+	return {bestEffort: efforts[bestEffort], efforts};
+}
+
 async function run() {
     let powerData;
     try {
@@ -87,6 +147,14 @@ async function run() {
     
     console.log(powerData)
 
+    // find efforts
+    const powerMinimum = 350;
+    const period = 30;
+    const minJoules = 5000;
+    const {bestEffort, efforts}  = findEfforts(powerData, powerMinimum, period, minJoules);
+    console.log(bestEffort);
+    console.log(efforts);
+
     // add a custom plotlyjs chart to the page
     let chart = document.getElementsByClassName("chart")[0];
     // create a div with text content
@@ -94,9 +162,44 @@ async function run() {
     // div.textContent = "Canyoutoast - With Power!";
     div.style.width = "100%";
 
-    Plotly.newPlot( div, [{
+    // Plotly.newPlot( div, [{
+    //     x: powerData.map((_, i) => i),
+    //     y: powerData }], {
+    //     margin: { t: 0 } } );#
+
+    const traces = efforts.map((value, i) => { 
+        return {
+            x: Array.from({ length: value.endIndex - value.startIndex }, (v, k) => value.startIndex + k),
+            y: Array.from({ length: value.endIndex - value.startIndex }, (v, k) => powerData[value.startIndex + k]),
+            type: 'scatter',
+            mode: 'lines',
+            name: `Effort ${i + 1}`
+        }
+    })
+    // display all the power as a 50% opacity line
+    traces.push({
         x: powerData.map((_, i) => i),
-        y: powerData }], {
+        y: powerData,
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Power',
+        opacity: 0.5
+    });
+
+    // display the best effort as a filled in area
+    traces.push({
+        x: Array.from({ length: bestEffort.endIndex - bestEffort.startIndex }, (v, k) => bestEffort.startIndex + k),
+        y: Array.from({ length: bestEffort.endIndex - bestEffort.startIndex }, (v, k) => powerData[bestEffort.startIndex + k]),
+        type: 'scatter',
+        mode: 'lines',
+        fill: 'tozeroy',
+        name: 'Best Effort'
+    });
+
+    console.log(traces)
+
+    Plotly.newPlot( div, traces,
+        {
         margin: { t: 0 } } );
 
     chart.insertBefore(div, chart.lastElementChild);
