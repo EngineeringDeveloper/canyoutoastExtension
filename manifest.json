@@ -4,17 +4,49 @@
     "version": "1.0",
     "manifest_version": 3,
     "action": {
-      "default_popup": "hello.html",
-      "default_icon": "toast.png"
+        "default_popup": "hello.html",
+        "default_icon": "toast.png"
+    },
+    "externally_connectable": {
+        "matches": ["https://www.strava.com/*"]
     },
     "content_scripts": [
         {
-          "js": ["activity.js", "plotly.min.js"],
-          "world": "MAIN",
+            "js": ["plotly.min.js", "activity.js"],
+            "css": ["style.css"],
+            "world": "MAIN",
+            "run_at": "document_end",
+            "matches": [
+                "https://www.strava.com/activities/*",
+                "https://www.strava.com/activities/*/analysis"
+            ]
+        },
+        {
+          "js": ["test.js"],
           "run_at": "document_end",
           "matches": [
-            "https://www.strava.com/activities/*/analysis"
+              "https://www.strava.com/activities/*",
+              "https://www.strava.com/activities/*/analysis"
           ]
-        }
-      ]
-  }
+      }
+    ],
+    "web_accessible_resources": [{
+        "resources": [
+            "/images/toast/0.png",
+            "/images/toast/1.png",
+            "/images/toast/2.png",
+            "/images/toast/3.png",
+            "/images/toast/4.png",
+            "/images/toast/5.png",
+            "/images/toast/6.png",
+            "/images/toast/7.png",
+            "/images/toast/8.png",
+            "/images/toast/9.png",
+            "/images/toast/10.png",
+            "/images/toast/11.png"
+        ],
+        "matches": [
+                "https://www.strava.com/*"
+            ]
+    }]
+}
