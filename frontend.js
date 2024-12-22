@@ -249,11 +249,7 @@ function checkForPlotly() {
     return false;
 }
 
-async function runFrontend() {
-    if (checkForPlotly()) {
-        return;
-    }
-
+async function getEfforts(params) {
     let powerData;
     try {
         powerData = (await fetchStreams(["watts"]))[0];
@@ -274,10 +270,11 @@ async function runFrontend() {
         period,
         minJoules
     );
-    console.log(bestEffort);
-    console.log(efforts);
+    console.log(bestEffort, efforts);
+    return { bestEffort, efforts, powerData };
+}
 
-    // add a custom plotlyjs chart to the page
+async function plotEfforts(efforts, powerData, bestEffort) {
     let chart = document.querySelectorAll('section[class="chart"]');
     while (chart.length == 0) {
         console.log("CanyoutoastExtension - Waiting for chart to load");
@@ -337,9 +334,7 @@ async function runFrontend() {
     const maxLength = powerData.length;
 
     // get the extension id from the img tag with the toast-extension attribute
-    const extensionId = document
-        .querySelector('span[toast-extension="true"]')
-        .getAttribute("toast-extension-id");
+    const extensionId = getExtensionId();
 
     // add images for each trace from the toastSrc array
     const layout = {
@@ -350,9 +345,7 @@ async function runFrontend() {
         images: efforts.map((effort) => {
             console.log(toastSrc[effort.bin]);
             return {
-                source: `chrome-extension://${extensionId}${
-                    toastSrc[effort.bin].src
-                }`,
+                source: `chrome-extension://${extensionId}${toastSrc[effort.bin].src}`,
                 xref: "paper",
                 yref: "paper",
                 x: (effort.startIndex + effort.endIndex) / (2 * maxLength),
@@ -371,19 +364,6 @@ async function runFrontend() {
     chart.insertBefore(div, chart.children[5]);
 
     // TODO add an event handler which resizes the images when the plotly chart is resized
-
-    // TODO get the toast-badge span and update its img and text to the best effort
-    const badge = document.querySelector('span[class = "toast-badge"]');
-    console.log(badge)
-    const img = badge.querySelector("img");
-    const text = badge.querySelector("span");
-    img.src = `chrome-extension://${extensionId}${
-                    toastSrc[bestEffort.bin].src
-                }`;
-    img.alt = toastSrc[bestEffort.bin].altText;
-    text.textContent = toastSrc[bestEffort.bin].text;
-
-
     // observer to force a resize of the plotly chart when the div is added to the page
     const observer = new MutationObserver(() => {
         if (document.contains(div)) {
@@ -398,13 +378,72 @@ async function runFrontend() {
     });
 }
 
+function getExtensionId() {
+    return document
+        .querySelector('span[toast-extension="true"]')
+        .getAttribute("toast-extension-id");
+}
+
+function secondsToMMSS(number) {
+    const mins = number / 60;
+    const seconds = number % 60;
+
+    let str = '';
+    if (mins > 0) {
+        str += mins.toFixed(0);
+        str += 'Min';
+        if (mins >= 2) {
+            str += 's';
+        }
+        str += ' ';
+    }
+    str += seconds.toFixed(0);
+    str += 's';
+    return str;
+}
+
+function updateToastBadge(bestEffort) {
+    const extensionId = getExtensionId();
+    const badge = document.querySelector('span[class = "toast-badge"]');
+    console.log(badge);
+    const img = badge.querySelector("img");
+    const text = badge.querySelector("span");
+    img.src = `chrome-extension://${extensionId}${toastSrc[bestEffort.bin].src}`;
+    img.alt = toastSrc[bestEffort.bin].altText;
+    text.textContent = `${toastSrc[bestEffort.bin].text} - ${bestEffort.power.toFixed(0)}W for ${secondsToMMSS(bestEffort.timeS)}`;
+}
+
+// Runners
+
+async function runFrontendAnalysis() {
+    if (checkForPlotly()) {
+        return;
+    }
+
+    const { bestEffort, efforts, powerData } = await getEfforts();
+
+    // TODO get the toast-badge span and update its img and text to the best effort
+    updateToastBadge(bestEffort);
+    
+    // add a custom plotlyjs chart to the page
+    await plotEfforts(efforts, powerData, bestEffort);
+}
+
+async function runFrontendFrontpage() {
+    const { bestEffort, efforts, powerData } = await getEfforts();
+
+    // TODO get the toast-badge span and update its img and text to the best effort
+    updateToastBadge(bestEffort);
+}
+
 function checkURL() {
     // if the url is "*/activities" then add an onclick event to the a tag with data-menu="activity"
     if (window.location.href.includes("activities")) {
         // add an onclick event to the a tag with data-menu="activity"
         let activity = document.querySelector('a[data-menu="analysis"]');
-        activity.addEventListener("click", runFrontend);
+        activity.addEventListener("click", runFrontendAnalysis);
         console.log("CanyoutoastExtension - Added click event to analysis");
+        runFrontendFrontpage()
     }
     // if the url is "*/activities/*/analysis" then run the run function immediately
     if (
@@ -412,7 +451,7 @@ function checkURL() {
         window.location.href.includes("analysis")
     ) {
         console.log("CanyoutoastExtension - Running Immediately");
-        runFrontend();
+        runFrontendAnalysis();
     }
 }
 
