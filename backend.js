@@ -3,6 +3,13 @@
 
 function runBackend() {
     console.log("CAn you toast Extsnsion - running backend")
+
+    if (document.getElementsByClassName("toast-badge").length != 0) {
+        // TODO: added this now the badge does not show if you start on overview and then go to analysis
+        console.log("Can you toast extension backend - already ran")
+        return
+    }
+
     // TODO style this better so that it looks seemless with the graph
     // Can be a generic toast element that works on both the activities and the activities/*/analysis page
     // on 

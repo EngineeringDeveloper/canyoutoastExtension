@@ -258,7 +258,6 @@ async function getEfforts(params) {
         noData();
     }
 
-    console.log(powerData);
 
     // find efforts
     const powerMinimum = 350;
@@ -329,8 +328,6 @@ async function plotEfforts(efforts, powerData, bestEffort) {
         name: "Best Effort",
     });
 
-    console.log(traces);
-
     const maxLength = powerData.length;
 
     // get the extension id from the img tag with the toast-extension attribute
@@ -343,7 +340,6 @@ async function plotEfforts(efforts, powerData, bestEffort) {
         },
         autosize: true,
         images: efforts.map((effort) => {
-            console.log(toastSrc[effort.bin]);
             return {
                 source: `chrome-extension://${extensionId}${toastSrc[effort.bin].src}`,
                 xref: "paper",
@@ -405,7 +401,6 @@ function secondsToMMSS(number) {
 function updateToastBadge(bestEffort) {
     const extensionId = getExtensionId();
     const badge = document.querySelector('span[class = "toast-badge"]');
-    console.log(badge);
     const img = badge.querySelector("img");
     const text = badge.querySelector("span");
     img.src = `chrome-extension://${extensionId}${toastSrc[bestEffort.bin].src}`;
@@ -444,6 +439,9 @@ function checkURL() {
         activity.addEventListener("click", runFrontendAnalysis);
         console.log("CanyoutoastExtension - Added click event to analysis");
         runFrontendFrontpage()
+
+        let overview = document.querySelector('a[data-menu="overview"]');
+        activity.addEventListener("click", runFrontendFrontpage);
     }
     // if the url is "*/activities/*/analysis" then run the run function immediately
     if (
