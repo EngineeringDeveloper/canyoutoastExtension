@@ -372,6 +372,18 @@ async function runFrontend() {
 
     // TODO add an event handler which resizes the images when the plotly chart is resized
 
+    // TODO get the toast-badge span and update its img and text to the best effort
+    const badge = document.querySelector('span[class = "toast-badge"]');
+    console.log(badge)
+    const img = badge.querySelector("img");
+    const text = badge.querySelector("span");
+    img.src = `chrome-extension://${extensionId}${
+                    toastSrc[bestEffort.bin].src
+                }`;
+    img.alt = toastSrc[bestEffort.bin].altText;
+    text.textContent = toastSrc[bestEffort.bin].text;
+
+
     // observer to force a resize of the plotly chart when the div is added to the page
     const observer = new MutationObserver(() => {
         if (document.contains(div)) {

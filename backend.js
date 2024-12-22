@@ -31,14 +31,18 @@ function runBackend() {
     badge.style.flexDirection = "row"
     badge.style.alignItems = "center"
     badge.style.justifyContent = "center"
+    badge.className = "toast-badge" 
     
     let img = document.createElement("img");
     img.src = chrome.runtime.getURL("/images/toast/0.png");
     img.style.width = "50px"
+    img.className = "toast-badge-img"
     badge.appendChild(img)
 
     let text = document.createElement("span");
     text.textContent = "Toast Extension - data here";
+    // use this to change the text on the front end
+    text.className = "toast-badge-text"
     badge.appendChild(text);
 }
 
