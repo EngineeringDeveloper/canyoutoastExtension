@@ -85,37 +85,83 @@ function idxMax(array) {
 }
 
 const bins = [
-    30000, 43200, 64800, 86400, 97200, 108000, 129600, 151200, 162000, 172800, 194400
+    30000, 43200, 64800, 86400, 97200, 108000, 129600, 151200, 162000, 172800,
+    194400,
 ];
 
 const toastSrc = [
-    { text: 'Thats just Bread', altText: 'Thats just Bread', src: '/images/toast/0.png', idx: 0 }, // 0 Bread
-    { text: "I guess it's warm?", altText: 'Warmed Bread', src: '/images/toast/1.png', idx: 1 },
     {
-        text: 'If you look closely',
-        altText: 'Slightly cooked if you look closely',
-        src: '/images/toast/2.png',
-        idx: 2
-    },
-    { text: 'Just about!', altText: 'Just about toast', src: '/images/toast/3.png', idx: 3 }, // 3
+        text: "Thats just Bread",
+        altText: "Thats just Bread",
+        src: "/images/toast/0.png",
+        idx: 0,
+    }, // 0 Bread
     {
-        text: 'Keep Trying',
-        altText: 'almost toast keep trying',
-        src: '/images/toast/4.png',
-        idx: 4
+        text: "I guess it's warm?",
+        altText: "Warmed Bread",
+        src: "/images/toast/1.png",
+        idx: 1,
     },
-    { text: 'Not quite there', altText: 'Almost Done Toast', src: '/images/toast/5.png', idx: 5 },
-    { text: 'Now thats Toast', altText: 'Builders Brew Toast', src: '/images/toast/6.png', idx: 6 }, // 6
     {
-        text: 'A little over done',
-        altText: 'a litte overdone Toast',
-        src: '/images/toast/7.png',
-        idx: 7
+        text: "If you look closely",
+        altText: "Slightly cooked if you look closely",
+        src: "/images/toast/2.png",
+        idx: 2,
     },
-    { text: "That'll do", altText: 'overdone Toast', src: '/images/toast/8.png', idx: 8 },
-    { text: 'Half way to dust', altText: 'half burnt', src: '/images/toast/9.png', idx: 9 },
-    { text: 'Maybe edible', altText: 'almost burnt', src: '/images/toast/10.png', idx: 10 }, // 10
-    { text: 'On Fire!', altText: 'Toast on Fire', src: '/images/toast/11.png', idx: 11 } // Burnt
+    {
+        text: "Just about!",
+        altText: "Just about toast",
+        src: "/images/toast/3.png",
+        idx: 3,
+    }, // 3
+    {
+        text: "Keep Trying",
+        altText: "almost toast keep trying",
+        src: "/images/toast/4.png",
+        idx: 4,
+    },
+    {
+        text: "Not quite there",
+        altText: "Almost Done Toast",
+        src: "/images/toast/5.png",
+        idx: 5,
+    },
+    {
+        text: "Now thats Toast",
+        altText: "Builders Brew Toast",
+        src: "/images/toast/6.png",
+        idx: 6,
+    }, // 6
+    {
+        text: "A little over done",
+        altText: "a litte overdone Toast",
+        src: "/images/toast/7.png",
+        idx: 7,
+    },
+    {
+        text: "That'll do",
+        altText: "overdone Toast",
+        src: "/images/toast/8.png",
+        idx: 8,
+    },
+    {
+        text: "Half way to dust",
+        altText: "half burnt",
+        src: "/images/toast/9.png",
+        idx: 9,
+    },
+    {
+        text: "Maybe edible",
+        altText: "almost burnt",
+        src: "/images/toast/10.png",
+        idx: 10,
+    }, // 10
+    {
+        text: "On Fire!",
+        altText: "Toast on Fire",
+        src: "/images/toast/11.png",
+        idx: 11,
+    }, // Burnt
 ];
 
 function binValue(value) {
@@ -203,7 +249,7 @@ function checkForPlotly() {
     return false;
 }
 
-async function run() {
+async function runFrontend() {
     if (checkForPlotly()) {
         return;
     }
@@ -290,6 +336,11 @@ async function run() {
 
     const maxLength = powerData.length;
 
+    // get the extension id from the img tag with the toast-extension attribute
+    const extensionId = document
+        .querySelector('span[toast-extension="true"]')
+        .getAttribute("toast-extension-id");
+
     // add images for each trace from the toastSrc array
     const layout = {
         title: {
@@ -297,35 +348,42 @@ async function run() {
         },
         autosize: true,
         images: efforts.map((effort) => {
-            console.log(toastSrc[effort.bin])
+            console.log(toastSrc[effort.bin]);
             return {
-                source: toastSrc[effort.bin].src,
+                source: `chrome-extension://${extensionId}${
+                    toastSrc[effort.bin].src
+                }`,
                 xref: "paper",
                 yref: "paper",
                 x: (effort.startIndex + effort.endIndex) / (2 * maxLength),
-                y: 0.5,
-                sizex: 0.5,
-                sizey: 0.5,
+                y: 0.6,
+                sizex: ((effort.endIndex - effort.startIndex) * 3) / maxLength,
+                sizey: ((effort.endIndex - effort.startIndex) * 3) / maxLength,
                 xanchor: "center",
                 yanchor: "middle",
                 opacity: 0.5,
             };
-        })
+        }),
     };
 
     const config = { responsive: true };
-
     Plotly.newPlot(div, traces, layout, config);
+    chart.insertBefore(div, chart.children[5]);
 
-    chart.insertBefore(div, chart.lastElementChild);
+    // TODO add an event handler which resizes the images when the plotly chart is resized
 
     // observer to force a resize of the plotly chart when the div is added to the page
     const observer = new MutationObserver(() => {
         if (document.contains(div)) {
-            Plotly.Plots.resize(div)
+            Plotly.Plots.resize(div);
         }
-    })
-    observer.observe(document, {attributes: false, childList: true, characterData: false, subtree:true});
+    });
+    observer.observe(document, {
+        attributes: false,
+        childList: true,
+        characterData: false,
+        subtree: true,
+    });
 }
 
 function checkURL() {
@@ -333,7 +391,7 @@ function checkURL() {
     if (window.location.href.includes("activities")) {
         // add an onclick event to the a tag with data-menu="activity"
         let activity = document.querySelector('a[data-menu="analysis"]');
-        activity.addEventListener("click", run);
+        activity.addEventListener("click", runFrontend);
         console.log("CanyoutoastExtension - Added click event to analysis");
     }
     // if the url is "*/activities/*/analysis" then run the run function immediately
@@ -342,7 +400,7 @@ function checkURL() {
         window.location.href.includes("analysis")
     ) {
         console.log("CanyoutoastExtension - Running Immediately");
-        run();
+        runFrontend();
     }
 }
 

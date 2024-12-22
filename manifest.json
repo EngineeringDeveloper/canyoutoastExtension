@@ -12,7 +12,15 @@
     },
     "content_scripts": [
         {
-            "js": ["plotly.min.js", "activity.js"],
+          "js": ["backend.js"],
+          "run_at": "document_end",
+          "matches": [
+              "https://www.strava.com/activities/*",
+              "https://www.strava.com/activities/*/analysis"
+          ]
+        },
+        {
+            "js": ["plotly.min.js", "frontend.js"],
             "css": ["style.css"],
             "world": "MAIN",
             "run_at": "document_end",
@@ -20,15 +28,7 @@
                 "https://www.strava.com/activities/*",
                 "https://www.strava.com/activities/*/analysis"
             ]
-        },
-        {
-          "js": ["test.js"],
-          "run_at": "document_end",
-          "matches": [
-              "https://www.strava.com/activities/*",
-              "https://www.strava.com/activities/*/analysis"
-          ]
-      }
+        }
     ],
     "web_accessible_resources": [{
         "resources": [
