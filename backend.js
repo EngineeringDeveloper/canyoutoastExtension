@@ -33,7 +33,7 @@ function runBackend() {
     badge.style.gridTemplateColumns = "7.5% 40% 5% 40% 7.5%"
     badge.style.alignItems = "center"
     badge.style.justifyContent = "center"
-    badge.style.alignItems = "center"
+    badge.style.justifyItems = "center"
 
     let title = document.createElement("div");
     title.textContent = "Can you Toast?";
