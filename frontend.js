@@ -400,12 +400,14 @@ function secondsToMMSS(number) {
 
 function updateToastBadge(bestEffort) {
     const extensionId = getExtensionId();
-    const badge = document.querySelector('span[class = "toast-badge"]');
-    const img = badge.querySelector("img");
-    const text = badge.querySelector("span");
-    img.src = `chrome-extension://${extensionId}${toastSrc[bestEffort.bin].src}`;
-    img.alt = toastSrc[bestEffort.bin].altText;
-    text.textContent = `${toastSrc[bestEffort.bin].text} - ${bestEffort.power.toFixed(0)}W for ${secondsToMMSS(bestEffort.timeS)}`;
+    const badges = document.querySelectorAll('span[class = "toast-badge"]');
+    for (const badge of badges) {
+        const img = badge.querySelector("img");
+        const text = badge.querySelector("span");
+        img.src = `chrome-extension://${extensionId}${toastSrc[bestEffort.bin].src}`;
+        img.alt = toastSrc[bestEffort.bin].altText;
+        text.textContent = `${toastSrc[bestEffort.bin].text} - ${bestEffort.power.toFixed(0)}W for ${secondsToMMSS(bestEffort.timeS)}`;
+    }
 }
 
 // Runners
@@ -417,7 +419,6 @@ async function runFrontendAnalysis() {
 
     const { bestEffort, efforts, powerData } = await getEfforts();
 
-    // TODO get the toast-badge span and update its img and text to the best effort
     updateToastBadge(bestEffort);
     
     // add a custom plotlyjs chart to the page
@@ -427,7 +428,6 @@ async function runFrontendAnalysis() {
 async function runFrontendFrontpage() {
     const { bestEffort, efforts, powerData } = await getEfforts();
 
-    // TODO get the toast-badge span and update its img and text to the best effort
     updateToastBadge(bestEffort);
 }
 
