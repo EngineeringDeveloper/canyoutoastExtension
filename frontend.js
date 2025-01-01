@@ -358,11 +358,6 @@ async function plotEfforts(efforts, powerData, bestEffort) {
             if (eventdata.autosize == true) { 
                 return;
             }
-            alert( 'ZOOM!' + '\n\n' +
-                'Event data:' + '\n' +
-                 JSON.stringify(eventdata) + '\n\n' +
-                'x-axis start:' + eventdata['xaxis.range[0]'] + '\n' +
-                'x-axis end:' + eventdata['xaxis.range[1]']);
             
             const start = eventdata['xaxis.range[0]'];
             const end = eventdata['xaxis.range[1]'];
