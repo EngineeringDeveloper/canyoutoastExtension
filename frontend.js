@@ -276,34 +276,9 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     // create a div with text content
     let graphDiv = document.createElement("div");
     graphDiv.style = "display: flex;width: auto;justify-content: center;";
-
-    const traces = efforts.map((value, i) => {
-        return {
-            x: Array.from(
-                { length: value.endIndex - value.startIndex },
-                (v, k) => value.startIndex + k
-            ),
-            y: Array.from(
-                { length: value.endIndex - value.startIndex },
-                (v, k) => powerData[value.startIndex + k]
-            ),
-            type: "scatter",
-            mode: "lines",
-            name: `Effort ${i + 1}`,
-        };
-    });
-    // display all the power as a 50% opacity line
-    traces.push({
-        x: powerData.map((_, i) => i),
-        y: powerData,
-        type: "scatter",
-        mode: "lines",
-        name: "Power",
-        opacity: 0.5,
-    });
-
+    
     // display the best effort as a filled in area
-    traces.push({
+    const traces = [{
         x: Array.from(
             { length: bestEffort.endIndex - bestEffort.startIndex },
             (v, k) => bestEffort.startIndex + k
@@ -316,6 +291,39 @@ async function plotEfforts(efforts, powerData, bestEffort) {
         mode: "lines",
         fill: "tozeroy",
         name: "Best Effort",
+        legendgroup: "Best Effort",
+        legendgrouptitle: {text:"Best Effort"},
+    },
+    // display all the power as a 50% opacity line
+    {
+        x: powerData.map((_, i) => i),
+        y: powerData,
+        type: "scatter",
+        mode: "lines",
+        name: "Power",
+        opacity: 0.5,
+        legendgroup: "Power",
+        // showlegend: false,
+        }
+    ]
+    
+    efforts.map((effort, i) => {
+        traces.push({
+            x: Array.from(
+                { length: effort.endIndex - effort.startIndex },
+                (v, k) => effort.startIndex + k
+            ),
+            y: Array.from(
+                { length: effort.endIndex - effort.startIndex },
+                (v, k) => powerData[effort.startIndex + k]
+            ),
+            type: "scatter",
+            mode: "lines",
+            name: `Effort ${i + 1}`,
+            legendgroup: `${toastSrc[effort.bin].text}`,
+            legendgrouptitle: { text: `${toastSrc[effort.bin].text}` },
+            // showlegend: false,
+        });
     });
 
     const maxLength = powerData.length;
@@ -324,73 +332,90 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     const extensionId = await getExtensionId();
 
     // add images for each trace from the toastSrc array
+    const images = []
+    const annotations = []
+    efforts.map((effort) => {
+        const x = (effort.startIndex + effort.endIndex) / 2
+        const y = powerData[Math.round(x)]
+
+        const sizeX = (effort.endIndex - effort.startIndex) * 0.8;
+
+        images.push({
+            source: `chrome-extension://${extensionId}${
+                toastSrc[effort.bin].src
+            }`,
+            xref: "x",
+            yref: "y",
+            x: x,
+            y: y,
+            sizex: sizeX,            
+            sizey: 10000,
+            sizing: "contain",
+            xanchor: "center",
+            yanchor: "middle",
+            opacity: 0.5,
+        });
+        annotations.push(
+            {
+                x: x,
+                y: y,
+                text: `${toastSrc[effort.bin].text}`,
+                showarrow: true,
+                xanchor: "left",
+                yanchor: "middle",
+            }
+        )
+    })
+
     const layout = {
         title: {
             text: "CanYouToast - Power Analysis",
         },
         autosize: true,
-        images: efforts.map((effort) => {
-            return {
-                source: `chrome-extension://${extensionId}${
-                    toastSrc[effort.bin].src
-                }`,
-                xref: "paper",
-                yref: "paper",
-                x: (effort.startIndex + effort.endIndex) / (2 * maxLength),
-                y: 0.6,
-                sizex: ((effort.endIndex - effort.startIndex) * 3) / maxLength,
-                sizey: ((effort.endIndex - effort.startIndex) * 3) / maxLength,
-                xanchor: "center",
-                yanchor: "middle",
-                opacity: 0.5,
-            };
-        }),
+        images,
+        annotations,
     };
 
     const config = { responsive: true };
     Plotly.newPlot(graphDiv, traces, layout, config);
     chart.insertBefore(graphDiv, chart.children[5]);
 
-    // TODO add an event handler which resizes the images when the plotly chart is resized
     // event listener to to resize and position the the toasts when the graph changes
+    // this is because the images are fixed position relative to the page
     graphDiv.on('plotly_relayout',
         function (eventdata) {
             if (eventdata.autosize == true) { 
                 return;
             }
-            
-            const start = eventdata['xaxis.range[0]'];
-            const end = eventdata['xaxis.range[1]'];
-            const axisWidth = end - start;
-            // update the layout object
-            // each image is resized and reposited based on the new x-axis range
-            layout.images = efforts.filter((effort) => {
-                // is in range
-                // start is before the end of range and end is after the start of the range
-                return (effort.startIndex <= eventdata['xaxis.range[1]']) && (effort.endIndex >= eventdata['xaxis.range[0]']);
-            }).map((effort) => {
-                // new x position is 
-                const centre = (effort.startIndex + effort.endIndex) / 2;
-                const x = (centre - start) / axisWidth;
-                const sizex = ((effort.endIndex - effort.startIndex) * 3) / axisWidth;
-                const sizey = sizex
+            // if the xaxis is autorange then just reset all the annotations
+            if (eventdata["xaxis.autorange"] == true) {
+                for (let i = 0; i < layout.images.length; i++) {
+                    layout.images[i].sizey = 10000;
+                    layout.annotations[i].xanchor = "left";
+                    layout.annotations[i].showarrow = true;
+                }
+            } else {
+                // show the text in the centre of the image and limit its size if needed 
+    
+                // handles x axis adjustment only (no y axis range provided)
+                if (eventdata["yaxis.range[1]"] == null) {
+                    eventdata["yaxis.range[0]"] = layout.yaxis.range[0]
+                    eventdata["yaxis.range[1]"] = layout.yaxis.range[1]
+                }
+                const yAxisWidth = eventdata['yaxis.range[1]'] - eventdata['yaxis.range[0]'];
+                // const yCentre = (eventdata['yaxis.range[0]'] + eventdata['yaxis.range[1]']) / 2;
+                
+                for (let i = 0; i < layout.images.length; i++) {
+                    // layout.images[i].y = yCentre; // if the image should be moved to the centre of the axis
+                    layout.images[i].sizey = yAxisWidth;
+                    layout.annotations[i].xanchor = "center";
+                    layout.annotations[i].showarrow = false;
+                }
+            }
 
-                return {
-                    source: `chrome-extension://${extensionId}${toastSrc[effort.bin].src
-                        }`,
-                    xref: "paper",
-                    yref: "paper",
-                    x: x,
-                    y: 0.6,
-                    sizex: sizex,
-                    sizey: sizey,
-                    xanchor: "center",
-                    yanchor: "middle",
-                    opacity: 0.5,
-                };
-            });
-            console.log("can you toast - relayout", layout);
             Plotly.relayout(graphDiv, layout);
+            console.log("can you toast - relayout Complete", eventdata, layout);
+
         });
 
 
