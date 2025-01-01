@@ -1,6 +1,6 @@
 {
     "name": "CanyouToast?",
-    "description": "Base Level Extension",
+    "description": "Can you toast an extension of the website Canyoutoast.com updating the strava activity and analysis with a toast based effort anaylsis",
     "version": "1.0",
     "manifest_version": 3,
     "action": {

@@ -37,9 +37,11 @@ async function runBackend() {
         badge.setAttribute("toast-extension-id", chrome.runtime.id);
         badge.className = "toast-badge"
     
-        let title = document.createElement("div");
+        let title = document.createElement("a");
         title.className = "toast-badge-title"
         title.textContent = "Can you Toast?";
+        title.href = "https://canyoutoast.com"
+        title.setAttribute("target", "_blank")
 
         badge.appendChild(title)
 
