@@ -37,24 +37,20 @@ async function runBackend() {
         badge.setAttribute("toast-extension-id", chrome.runtime.id);
         badge.className = "toast-badge"
     
-        badge.style.display = "grid"
-        badge.style.gridTemplateColumns = "7.5% 40% 5% 40% 7.5%"
-        badge.style.alignItems = "center"
-        badge.style.justifyContent = "center"
-        badge.style.justifyItems = "center"
-    
         let title = document.createElement("div");
+        title.className = "toast-badge-title"
         title.textContent = "Can you Toast?";
-        title.style.gridArea = "1 / span 5"
-        title.style.textAlign = "center"
+
         badge.appendChild(title)
+
+        let imgToaster = document.createElement("img");
+        imgToaster.src = chrome.runtime.getURL("/images/toaster.png");
+        imgToaster.className = "toast-toaster"
+        badge.appendChild(imgToaster)
         
         let img = document.createElement("img");
         img.src = chrome.runtime.getURL("/images/toast/0.png");
-        img.style.width = "50px"
         img.className = "toast-badge-img"
-        img.style.gridColumn = 2
-        img.style.gridRow = 2
         badge.appendChild(img)
     
         // badge.appendChild(document.createElement('<div style="width:10%"/>'))
@@ -63,8 +59,6 @@ async function runBackend() {
         text.textContent = "Toast Extension - Loading Data";
         // use this to change the text on the front end
         text.className = "toast-badge-text"
-        text.style.gridColumn = 4
-        text.style.gridRow = 2
         badge.appendChild(text);
 
         console.log("appending badge", div)

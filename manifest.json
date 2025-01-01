@@ -43,7 +43,8 @@
             "/images/toast/8.png",
             "/images/toast/9.png",
             "/images/toast/10.png",
-            "/images/toast/11.png"
+            "/images/toast/11.png",
+            "/images/toaster.png"
         ],
         "matches": [
                 "https://www.strava.com/*"

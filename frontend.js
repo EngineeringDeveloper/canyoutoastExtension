@@ -475,7 +475,7 @@ async function updateToastBadge(bestEffort) {
             badge.querySelector("span").textContent = "No Power Data Available";
             continue;
         }
-        const img = badge.querySelector("img");
+        const img = badge.querySelector("img[class = 'toast-badge-img']");
         const text = badge.querySelector("span");
         img.src = `chrome-extension://${extensionId}${
             toastSrc[bestEffort.bin].src

@@ -1,0 +1,36 @@
+.toast-badge {
+    margin: 10px;
+    display: grid;
+    grid-template-columns: 7.5% 20% 2.5% 20% 2.5% 40% 7.5%;
+    align-items: center;
+    justify-content: center;
+    justify-items: center;
+}
+
+.toast-badge-title {
+    grid-area: 1 / span 7;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-family: 'Arial Black', Gadget, sans-serif;
+}
+
+.toast-badge-img {
+    width: 100%;
+    grid-column: 4;
+    grid-row: 2
+}
+
+.toast-badge-text {
+    grid-column: 6;
+    grid-row: 2;
+    text-align: center;
+    font-size: 1.5vw;
+}
+
+
+.toast-toaster {
+    width : 100%;
+    grid-column: 2;
+    grid-row: 2;
+}
