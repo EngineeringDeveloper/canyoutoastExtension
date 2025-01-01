@@ -274,8 +274,8 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     chart = chart[0];
 
     // create a div with text content
-    let div = document.createElement("div");
-    div.style = "display: flex;width: auto;justify-content: center;";
+    let graphDiv = document.createElement("div");
+    graphDiv.style = "display: flex;width: auto;justify-content: center;";
 
     const traces = efforts.map((value, i) => {
         return {
@@ -348,14 +348,61 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     };
 
     const config = { responsive: true };
-    Plotly.newPlot(div, traces, layout, config);
-    chart.insertBefore(div, chart.children[5]);
+    Plotly.newPlot(graphDiv, traces, layout, config);
+    chart.insertBefore(graphDiv, chart.children[5]);
 
     // TODO add an event handler which resizes the images when the plotly chart is resized
+    // event listener to to resize and position the the toasts when the graph changes
+    graphDiv.on('plotly_relayout',
+        function (eventdata) {
+            if (eventdata.autosize == true) { 
+                return;
+            }
+            alert( 'ZOOM!' + '\n\n' +
+                'Event data:' + '\n' +
+                 JSON.stringify(eventdata) + '\n\n' +
+                'x-axis start:' + eventdata['xaxis.range[0]'] + '\n' +
+                'x-axis end:' + eventdata['xaxis.range[1]']);
+            
+            const start = eventdata['xaxis.range[0]'];
+            const end = eventdata['xaxis.range[1]'];
+            const axisWidth = end - start;
+            // update the layout object
+            // each image is resized and reposited based on the new x-axis range
+            layout.images = efforts.filter((effort) => {
+                // is in range
+                // start is before the end of range and end is after the start of the range
+                return (effort.startIndex <= eventdata['xaxis.range[1]']) && (effort.endIndex >= eventdata['xaxis.range[0]']);
+            }).map((effort) => {
+                // new x position is 
+                const centre = (effort.startIndex + effort.endIndex) / 2;
+                const x = (centre - start) / axisWidth;
+                const sizex = ((effort.endIndex - effort.startIndex) * 3) / axisWidth;
+                const sizey = sizex
+
+                return {
+                    source: `chrome-extension://${extensionId}${toastSrc[effort.bin].src
+                        }`,
+                    xref: "paper",
+                    yref: "paper",
+                    x: x,
+                    y: 0.6,
+                    sizex: sizex,
+                    sizey: sizey,
+                    xanchor: "center",
+                    yanchor: "middle",
+                    opacity: 0.5,
+                };
+            });
+            console.log("can you toast - relayout", layout);
+            Plotly.relayout(graphDiv, layout);
+        });
+
+
     // observer to force a resize of the plotly chart when the div is added to the page
     const observer = new MutationObserver(() => {
-        if (document.contains(div)) {
-            Plotly.Plots.resize(div);
+        if (document.contains(graphDiv)) {
+            Plotly.Plots.resize(graphDiv);
         }
     });
     observer.observe(document, {
