@@ -249,6 +249,12 @@ async function getEfforts(params) {
         updateToastBadge(null);
     }
 
+    if (powerData == undefined) {
+        return { bestEffort: null, efforts: [], powerData: [] };
+    }
+
+    console.log("CanyoutoastExtension - Power Data", powerData);
+
     // find efforts
     const powerMinimum = 350;
     const period = 30;
@@ -259,11 +265,19 @@ async function getEfforts(params) {
         period,
         minJoules
     );
-    console.log(bestEffort, efforts);
+    if (bestEffort == null) {
+        console.log("CanyoutoastExtension - No Toastable Effort Found");
+        return { bestEffort: "No Effort", efforts: [], powerData };
+    }
+    console.log(powerData, bestEffort, efforts);
     return { bestEffort, efforts, powerData };
 }
 
 async function plotEfforts(efforts, powerData, bestEffort) {
+    if (efforts.length == 0) {
+        return;
+    }
+
     let chart = document.querySelectorAll('section[class="chart"]');
     while (chart.length == 0) {
         console.log("CanyoutoastExtension - Waiting for chart to load");
@@ -473,6 +487,10 @@ async function updateToastBadge(bestEffort) {
     for (const badge of badges) {
         if (bestEffort == null) {
             badge.querySelector("span").textContent = "No Power Data Available";
+            continue;
+        }
+        if (bestEffort == "No Effort") {
+            badge.querySelector("span").textContent = "Thats just Bread - No Toastable efforts";
             continue;
         }
         const img = badge.querySelector("img[class = 'toast-badge-img']");
