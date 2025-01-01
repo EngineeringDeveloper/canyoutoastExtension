@@ -331,7 +331,7 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     const maxLength = powerData.length;
 
     // get the extension id from the img tag with the toast-extension attribute
-    const extensionId = getExtensionId();
+    const extensionId = await getExtensionId();
 
     // add images for each trace from the toastSrc array
     const layout = {
@@ -374,10 +374,18 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     });
 }
 
-function getExtensionId() {
-    return document
-        .querySelector('span[toast-extension="true"]')
-        .getAttribute("toast-extension-id");
+let extensionId = null
+async function getExtensionId() {
+    if (extensionId != null) {
+        return extensionId;
+    }
+    const span = document.querySelector('span[toast-extension="true"]')
+    if (span == null) {
+        await delay(500);   
+        return getExtensionId();
+    }
+    
+    return span.getAttribute("toast-extension-id");
 }
 
 function secondsToMMSS(number) {
@@ -398,8 +406,8 @@ function secondsToMMSS(number) {
     return str;
 }
 
-function updateToastBadge(bestEffort) {
-    const extensionId = getExtensionId();
+async function updateToastBadge(bestEffort) {
+    const extensionId = await getExtensionId();
     const badges = document.querySelectorAll('span[class = "toast-badge"]');
     for (const badge of badges) {
         const img = badge.querySelector("img");
@@ -419,7 +427,7 @@ async function runFrontendAnalysis() {
 
     const { bestEffort, efforts, powerData } = await getEfforts();
 
-    updateToastBadge(bestEffort);
+    await updateToastBadge(bestEffort);
     
     // add a custom plotlyjs chart to the page
     await plotEfforts(efforts, powerData, bestEffort);
@@ -428,7 +436,7 @@ async function runFrontendAnalysis() {
 async function runFrontendFrontpage() {
     const { bestEffort, efforts, powerData } = await getEfforts();
 
-    updateToastBadge(bestEffort);
+    await updateToastBadge(bestEffort);
 }
 
 function checkURL() {
