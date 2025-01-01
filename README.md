@@ -2,9 +2,15 @@
 Adds [canyoutoast's](https://canyoutoast.com) toaster based analysis to your strava activities
 
 ## Goals
-- get activity data on the analysis page
-- analyse power data to can you toast standards
-- create a graph with the toastable efforts
+- get activity data on the analysis page - Done!
+- analyse power data to can you toast standards - Done!
+- create a graph with the toastable efforts - In Progress
+
+## Sub Goals
+- neaten up the graph
+  - make the graph sync with the other analysis graphs?
+  - 
+- handling of runs?
 
 ## Development
 

@@ -60,7 +60,7 @@ async function runBackend() {
         // badge.appendChild(document.createElement('<div style="width:10%"/>'))
     
         let text = document.createElement("span");
-        text.textContent = "Toast Extension - data here";
+        text.textContent = "Toast Extension - Loading Data";
         // use this to change the text on the front end
         text.className = "toast-badge-text"
         text.style.gridColumn = 4
@@ -75,6 +75,9 @@ async function runBackend() {
         else {
             div.insertBefore(badge, div.children[5])
         }
+        // dispatch an event to force front end update
+        const event = new Event('toast-badge-added');
+        document.dispatchEvent(event);
     }    
     
 }

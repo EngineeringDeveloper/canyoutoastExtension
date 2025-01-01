@@ -4,15 +4,6 @@ console.log("Running Canyoutoast Extension");
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
-function noData() {
-    let chart = document.getElementsByClassName("chart")[0];
-    // create a div with text content
-    let div = document.createElement("div");
-    div.textContent =
-        "Canyoutoast - No Power Data Available - Can't toast with that!";
-    chart.insertBefore(div, chart.lastElementChild);
-}
-
 const _attemptedFetch = new Set();
 const _pendingFetches = new Map();
 async function fetchStreams(streamTypes) {
@@ -255,9 +246,8 @@ async function getEfforts(params) {
         powerData = (await fetchStreams(["watts"]))[0];
     } catch (e) {
         console.error(e);
-        noData();
+        updateToastBadge(null);
     }
-
 
     // find efforts
     const powerMinimum = 350;
@@ -341,7 +331,9 @@ async function plotEfforts(efforts, powerData, bestEffort) {
         autosize: true,
         images: efforts.map((effort) => {
             return {
-                source: `chrome-extension://${extensionId}${toastSrc[effort.bin].src}`,
+                source: `chrome-extension://${extensionId}${
+                    toastSrc[effort.bin].src
+                }`,
                 xref: "paper",
                 yref: "paper",
                 x: (effort.startIndex + effort.endIndex) / (2 * maxLength),
@@ -374,17 +366,17 @@ async function plotEfforts(efforts, powerData, bestEffort) {
     });
 }
 
-let extensionId = null
+let extensionId = null;
 async function getExtensionId() {
     if (extensionId != null) {
         return extensionId;
     }
-    const span = document.querySelector('span[toast-extension="true"]')
+    const span = document.querySelector('span[toast-extension="true"]');
     if (span == null) {
-        await delay(500);   
+        await delay(500);
         return getExtensionId();
     }
-    
+
     return span.getAttribute("toast-extension-id");
 }
 
@@ -392,29 +384,50 @@ function secondsToMMSS(number) {
     const mins = number / 60;
     const seconds = number % 60;
 
-    let str = '';
+    let str = "";
     if (mins > 0) {
         str += mins.toFixed(0);
-        str += 'Min';
+        str += "Min";
         if (mins >= 2) {
-            str += 's';
+            str += "s";
         }
-        str += ' ';
+        str += " ";
     }
     str += seconds.toFixed(0);
-    str += 's';
+    str += "s";
     return str;
 }
 
+let eventSet = false;
+// effort type or null if no data available
 async function updateToastBadge(bestEffort) {
     const extensionId = await getExtensionId();
     const badges = document.querySelectorAll('span[class = "toast-badge"]');
     for (const badge of badges) {
+        if (bestEffort == null) {
+            badge.querySelector("span").textContent = "No Power Data Available";
+            continue;
+        }
         const img = badge.querySelector("img");
         const text = badge.querySelector("span");
-        img.src = `chrome-extension://${extensionId}${toastSrc[bestEffort.bin].src}`;
+        img.src = `chrome-extension://${extensionId}${
+            toastSrc[bestEffort.bin].src
+        }`;
         img.alt = toastSrc[bestEffort.bin].altText;
-        text.textContent = `${toastSrc[bestEffort.bin].text} - ${bestEffort.power.toFixed(0)}W for ${secondsToMMSS(bestEffort.timeS)}`;
+        text.textContent = `${
+            toastSrc[bestEffort.bin].text
+        } - ${bestEffort.power.toFixed(0)}W for ${secondsToMMSS(
+            bestEffort.timeS
+        )}`;
+    }
+
+    // check for existing event listener
+    if (!eventSet) {
+        // add an event listener to update if a new badge appears
+        document.addEventListener("toast-badge-added", async () => {
+            updateToastBadge(bestEffort);
+        });
+        eventSet = true;
     }
 }
 
@@ -428,7 +441,7 @@ async function runFrontendAnalysis() {
     const { bestEffort, efforts, powerData } = await getEfforts();
 
     await updateToastBadge(bestEffort);
-    
+
     // add a custom plotlyjs chart to the page
     await plotEfforts(efforts, powerData, bestEffort);
 }
@@ -446,7 +459,7 @@ function checkURL() {
         let activity = document.querySelector('a[data-menu="analysis"]');
         activity.addEventListener("click", runFrontendAnalysis);
         console.log("CanyoutoastExtension - Added click event to analysis");
-        runFrontendFrontpage()
+        runFrontendFrontpage();
 
         let overview = document.querySelector('a[data-menu="overview"]');
         activity.addEventListener("click", runFrontendFrontpage);
