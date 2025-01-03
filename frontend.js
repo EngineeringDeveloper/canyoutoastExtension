@@ -467,7 +467,7 @@ function secondsToMMSS(number) {
 
     let str = "";
     if (mins > 0) {
-        str += mins.toFixed(0);
+        str += Math.floor(mins).toFixed(0);
         str += "Min";
         if (mins >= 2) {
             str += "s";
