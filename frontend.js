@@ -540,11 +540,12 @@ async function runFrontendFrontpage() {
 function checkURL() {
     // if the url is "*/activities" then add an onclick event to the a tag with data-menu="activity"
     if (window.location.href.includes("activities")) {
+        runFrontendFrontpage();
+        
         // add an onclick event to the a tag with data-menu="activity"
         let activity = document.querySelector('a[data-menu="analysis"]');
         activity.addEventListener("click", runFrontendAnalysis);
         console.log("CanyoutoastExtension - Added click event to analysis");
-        runFrontendFrontpage();
 
         let overview = document.querySelector('a[data-menu="overview"]');
         activity.addEventListener("click", runFrontendFrontpage);

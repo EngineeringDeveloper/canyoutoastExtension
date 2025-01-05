@@ -79,13 +79,13 @@ async function runBackend() {
 }
 
 function setup() {
+    // always run the backend
+    runBackend();
     // rerun the backend when the user clicks on the analysis tab
     let activity = document.querySelector('a[data-menu="analysis"]');
     activity.addEventListener("click", runBackend);
     let overview = document.querySelector('a[data-menu="overview"]');
     overview.addEventListener("click", runBackend);
-    // always run the backend
-    runBackend();
 }
 
 setup();
